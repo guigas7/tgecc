@@ -1,0 +1,74 @@
+#include <stdio.h>
+
+/* *** Premissas ***
+ * 
+ * Existe uma CA segura
+ * As PUs são calculadas em tempo de projeto
+ * A CA possui todas as PUs
+ * Cada PE possui a PUca
+ * 
+ * *** Construção da curva elíptica ***
+ * 
+ * Selecionar a curva
+ * Selecionar o PRNG
+ * Selecionar o ponto gerador
+ * Gerar as chaves públicas da CA e dos PEs
+ *
+ * *** Cifragem e Decifragem ***
+ * 
+ * 1 Alice solicita a PUb à CA
+ * 1.1 Cifra a solitação com PUca
+ * 
+ * 2 CA recebe e responde
+ * 2.1 Decifra a solicitação com sua chave privada
+ * 2.2 Cifra a respota PUb com a PUa
+ * 2.3 Assina com ECDSA
+ * 2.4 Envia a resposta (Pc) e a assinatura (r,s)
+ * 
+ * 3 Alice recebe da CA
+ * 3.1 Decifra com sua chave privada
+ * 3.2 Verifica a assinatura
+ * 
+ * 4 Alice cifra M
+ * 4.1 Pc = M + Ka * PUb
+ * 4.2 Envia Pc
+ * 
+ * 5 Bob recebe Pc
+ * 5.1 M = Pc - Kb * PUa
+ * 
+ */
+
+// Algoritmo Extendido de Euclides (g = a*u + b*v)
+int
+EGCD (int a, int b, int &u, int &v)
+{
+  u = 1;
+  v = 0;
+  int g = a;
+  int u1 = 0;
+  int v1 = 1;
+  int g1 = b;
+  while (g1 != 0)
+    {
+      int q = g / g1;
+      int t1 = u - q * u1;
+      int t2 = v - q * v1;
+      int t3 = g - q * g1;
+      u = u1;
+      v = v1;
+      g = g1;
+      u1 = t1;
+      v1 = t2;
+      g1 = t3;
+    }
+  return g;
+}
+
+
+void
+main ()
+{
+
+  printf ("olá!");
+
+}
