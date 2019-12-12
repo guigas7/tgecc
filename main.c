@@ -191,21 +191,19 @@ void eccSub(struct coord *rop, struct coord p, struct coord q)
 //~ Left-to-right binary algorithm
 void mult(struct coord *rop, mpz_t k, struct coord p)
 {
-	//~ output: q = kP
 	struct coord r0;
 	mpz_init_set(r0.x, p.x);
 	mpz_init_set(r0.y, p.y);
-	mpz_t i;
-	mpz_init(i);
-	// n = k - 2
-	for (mpz_sub_ui(i, k, 2); mpz_cmp_ui(i, 0) > 0; mpz_sub_ui(i, i, 1)) {
-		eccDbl(rop, *rop); // - return
+	int size = mpz_sizeinbase(ec.a, 2);
+	printf("size: %d\n", size);
+	for (mp_bitcnt_t i = 0; i < size - 1; i++) {
+		if (mpz_tstbit (ec.a, i) == 1) {
+			eccAdd(rop, rop, p);
+		}
+		eccDbl(p, 2, p);
 	}
-	eccAdd(rop, r0, *rop); // - return
-	printf("\n");
 	mpz_clear(r0.x);
 	mpz_clear(r0.y);
-	mpz_clear(i);
 }
 
 void euclidian(mpz_t rop, mpz_t a) /* Extended Euclidian algorithm */
@@ -307,16 +305,18 @@ void generateKeys()
 	gmp_randclear(state);
 }
 
-void generateMessage(int size, struct coord *m, char *plaintext)
+void generateMessage(int size, struct coord m, char *plaintext)
 {
 	for (int i = 0; i < size; i++)
 	{
 		int index = (rand() % 25);
 		plaintext[i] = alpha[index];
-		mpz_init_set(m[i].x, points[index].x);
-		mpz_init_set(m[i].y, points[index].y);
 	}
-	printf("Generated message in chat: %s\n", plaintext);
+	printf("Generated message in char: %s\n", plaintext);
+
+
+
+
 	printf("Generated message in points: ");
 	for (int i = 0; i < size; i++) {
 		gmp_printf("(%Zd,%Zd) ", m[i].x, m[i].y);
@@ -560,12 +560,12 @@ void main()
 	gmp_printf("ec.a: %Zd\n", ec.a);
 	gmp_printf("ec.b: %Zd\n", ec.b);
 	
-	findPoints();
-	showPoints();
-	generateKeys();
+	//findPoints();
+	//showPoints();
+	//generateKeys();
 	gmp_printf("G:[%Zd,%Zd]\n", ec.G.x, ec.G.y);
-	gmp_printf("PU[Alice]:[%Zd,%Zd]\n", PEs[ALICE].pu.x, PEs[ALICE].pu.y);
-	gmp_printf("PU[Bob]:[%Zd,%Zd]\n", PEs[BOB].pu.x, PEs[BOB].pu.y);
+	// gmp_printf("PU[Alice]:[%Zd,%Zd]\n", PEs[ALICE].pu.x, PEs[ALICE].pu.y);
+	// gmp_printf("PU[Bob]:[%Zd,%Zd]\n", PEs[BOB].pu.x, PEs[BOB].pu.y);
 	
 	// struct coord teste;
 	// mpz_init(teste.x);
@@ -578,19 +578,21 @@ void main()
 	// 	printf("deu caralho22!\n");
 	// }
 
+	// translateMessage();
+
 	int messageSize = 32;		// bytes
 	char *plaintext = malloc(sizeof(char) * messageSize);
-	struct coord message[messageSize];
+	struct coord mapped;
 
-	generateMessage(messageSize, message, plaintext);
+	generateMessage(messageSize, mapped, plaintext);
 
-	// Cifra
-	struct coord ciphered[messageSize];
-	eccCipher(PEs[ALICE], PEs[BOB], message, ciphered, messageSize);
+	// // Cifra
+	// struct coord ciphered[messageSize];
+	// eccCipher(PEs[ALICE], PEs[BOB], message, ciphered, messageSize);
 
-	// Decifra
-	struct coord deciphered[messageSize];
-	eccDecipher(PEs[ALICE], PEs[BOB], deciphered, ciphered, messageSize);
+	// // Decifra
+	// struct coord deciphered[messageSize];
+	// eccDecipher(PEs[ALICE], PEs[BOB], deciphered, ciphered, messageSize);
 
 	// // Assina  
 	// struct coord signature = sign(PEs[ALICE].k, plaintext, messageSize);

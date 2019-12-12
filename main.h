@@ -65,7 +65,7 @@ void euclidian(mpz_t rop, mpz_t a);
 void multInv(mpz_t rop, mpz_t a);
 
 void generateKeys();
-void generateMessage(int size, struct coord *m, char *plaintext);
+void generateMessage(int size, struct coord m, char *plaintext);
 
 void eccCipher(struct pe a, struct pe b, struct coord *m, struct coord *c, int s);
 void eccDecipher(struct pe a, struct pe b, struct coord *d, struct coord *c, int s);
