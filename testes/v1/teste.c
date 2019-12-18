@@ -1,4 +1,4 @@
-#include "main.h"
+#include "teste.h"
 
 void showPoints()
 {
@@ -51,7 +51,7 @@ void eccDbl(struct coord *rop, struct coord p) /* Double operation */
 	modp(s0, s0);
 	// if (p.y == -p.y || p.y == 0)
 	if (mpz_cmp(p.y, s0) == 0 || mpz_cmp_ui(p.y, 0) == 0) {
-		gmp_printf("ret inf, y=0 ou igual -y: (%Zd, %Zd)\n (%Zd, %zd)\n", p.x, p.y);
+		// gmp_printf("ret inf, y=0 ou igual -y: (%Zd, %Zd)\n (%Zd, %zd)\n", p.x, p.y);
 		mpz_set_ui(rop->x, 0);
 		mpz_set_ui(rop->y, 0);
 		rop->inf = INF;
@@ -267,7 +267,8 @@ void mult(struct coord *rop, mpz_t k, struct coord p)
 		eccDbl(&r0, aux);
 		//gmp_printf("r0: (%Zd, %Zd)\n", r0.x, r0.y);
 	}
-
+	mpz_clear(aux.x);
+	mpz_clear(aux.y);
 	mpz_clear(r0.x);
 	mpz_clear(r0.y);
 }
@@ -357,12 +358,12 @@ void generateKeys()
 	// PEs[i].k = (rand % p) + 1
 	mpz_init(alice.k);
 	mpz_add_ui(alice.k, s0, 1); //~ Chave privada (k)
-	gmp_printf("chave privada a: %Zd\n", alice.k);
+	// gmp_printf("chave privada a: %Zd\n", alice.k);
 	mpz_init(alice.pu.x);
 	mpz_init(alice.pu.y);
 	alice.pu.inf = 0;
 	mult(&alice.pu, alice.k, ec.G);	//~ Chave Pública (pu)
-	gmp_printf("pub a: (%Zd, %Zd)\n", alice.pu.x, alice.pu.y);
+	// gmp_printf("pub a: (%Zd, %Zd)\n", alice.pu.x, alice.pu.y);
 	// initialize session key
 	mpz_init(alice.k_sess);
 
@@ -374,12 +375,12 @@ void generateKeys()
 	// PEs[i].k = (rand % p) + 1
 	mpz_init(bob.k);
 	mpz_add_ui(bob.k, s0, 1); //~ Chave privada (k)
-	gmp_printf("chave privada b: %Zd\n", bob.k);
+	// gmp_printf("chave privada b: %Zd\n", bob.k);
 	mpz_init(bob.pu.x);
 	mpz_init(bob.pu.y);
 	bob.pu.inf = 0;
 	mult(&bob.pu, bob.k, ec.G);	//~ Chave Pública (pu)
-	gmp_printf("pub b: (%Zd, %Zd)\n", bob.pu.x, bob.pu.y);
+	// gmp_printf("pub b: (%Zd, %Zd)\n", bob.pu.x, bob.pu.y);
 	// initialize session keys
 	mpz_init(bob.k_sess);
 
@@ -522,7 +523,7 @@ void eccCipher(struct coord *c2, struct coord *c1, int size)
 	c1->inf = 0;
 	mult(c1, alice.k_sess, ec.G);
 	groupAmnt = (size % 15 == 0 ? size/15 : size/15 + 1);
-	printf("pontos enviados: \n");
+	//printf("pontos enviados: \n");
 	for (int i = 0; i < groupAmnt; i++) {
 		mpz_init(c2[i].x);
 		mpz_init(c2[i].y);
@@ -533,14 +534,14 @@ void eccCipher(struct coord *c2, struct coord *c1, int size)
 		//gmp_printf("cipher: adding (%Zd, %Zd)\n (%Zd, %Zd)\n", points[i % nPoints].x, points[i % nPoints].y, aux.x, aux.y);
 
 		eccAdd(&c2[i], points[i % nPoints], aux);
-		gmp_printf("(%Zd, %Zd)\n", points[i % nPoints].x, points[i % nPoints].y);
+		//gmp_printf("(%Zd, %Zd)\n", points[i % nPoints].x, points[i % nPoints].y);
 	}
 
-	printf("Generated ciphered message in points: \n");
-	for (int i = 0; i < groupAmnt; i++) {
-		gmp_printf("(%Zd,%Zd) ", c2[i].x, c2[i].y);
-	}
-	printf("\n");
+	// printf("Generated ciphered message in points: \n");
+	// for (int i = 0; i < groupAmnt; i++) {
+	// 	gmp_printf("(%Zd,%Zd) ", c2[i].x, c2[i].y);
+	// }
+	// printf("\n");
 	mpz_clear(aux.x);
 	mpz_clear(aux.y);
 	mpz_clear(seed);
@@ -564,13 +565,36 @@ void eccDecipher(struct coord *d, struct coord *c2, struct coord c1, int size)
 		eccSub(&d[i], c2[i], aux);
 	}
 
-	printf("Generated deciphered message in points: \n");
-	for (int i = 0; i < groupAmnt; i++) {
-		gmp_printf("(%Zd,%Zd) ", d[i].x, d[i].y);
-	}
-	printf("\n");
+	// printf("Generated deciphered message in points: \n");
+	// for (int i = 0; i < groupAmnt; i++) {
+	// 	gmp_printf("(%Zd,%Zd) ", d[i].x, d[i].y);
+	// }
+	// printf("\n");
 	mpz_clear(aux.x);
 	mpz_clear(aux.y);
+}
+
+void test(int messageSize) {
+	long int groupAmnt = (messageSize % 15 == 0 ? messageSize/15 : messageSize/15 + 1);
+	// Cifra
+	struct coord *ciphered = malloc(groupAmnt * sizeof(struct coord));
+	struct coord pub_sess;
+	eccCipher(ciphered, &pub_sess, messageSize);
+
+	// Decifra
+	struct coord *deciphered = malloc(groupAmnt * sizeof(struct coord));
+	eccDecipher(deciphered, ciphered, pub_sess, messageSize);
+
+	// for (int i = 0; i < groupAmnt; i++) {
+	// 	int correto = 1;
+	// 	if (mpz_cmp(points[i % nPoints].x, deciphered[i].x) != 0 || mpz_cmp(points[i % nPoints].y, deciphered[i].y) != 0) {
+	// 		printf("teste %messageSize: ponto %d incorreto\n", i);
+	// 	}
+	// 	mpz_clear(ciphered[i].x);
+	// 	mpz_clear(ciphered[i].y);
+	// 	mpz_clear(deciphered[i].x);
+	// 	mpz_clear(deciphered[i].y);
+	// }
 }
 
 void main()
@@ -614,22 +638,33 @@ void main()
 	// gmp_printf("double p: (%Zd, %Zd)\n", r1.x, r1.y);
 
 
-	showPoints();
+	//showPoints();
 	generateKeys();
-	gmp_printf("G:[%Zd,%Zd]\n", ec.G.x, ec.G.y);
-	gmp_printf("PU[Alice]:[%Zd,%Zd]\n", alice.pu.x, alice.pu.y);
-	gmp_printf("PU[Bob]:[%Zd,%Zd]\n", bob.pu.x, bob.pu.y);
+	// gmp_printf("G:[%Zd,%Zd]\n", ec.G.x, ec.G.y);
+	// gmp_printf("PU[Alice]:[%Zd,%Zd]\n", alice.pu.x, alice.pu.y);
+	// gmp_printf("PU[Bob]:[%Zd,%Zd]\n", bob.pu.x, bob.pu.y);
 
-	int messageSize = 32;
-	int groupAmnt = (messageSize % 15 == 0 ? messageSize/15 : messageSize/15 + 1);
-	// Cifra
-	struct coord ciphered[groupAmnt];
-	struct coord pub_sess;
-	eccCipher(ciphered, &pub_sess, messageSize);
+	// test(1);
+	// test(2);
+	// test(4);
+	// test(8);
+	// test(16);
+	// test(32);
+	// test(64);
+	// test(128);
+	// test(256);
+	// test(512);
+	// test(1024);
+	// test(2048);
+	// test(4096);
+	// test(8192);
+	// test(16384);
+	test(32768);
+	// test(65536);
+	// test(131072);
+	// test(262144);
+	// test(524288);
 
-	// Decifra
-	struct coord deciphered[groupAmnt];
-	eccDecipher(deciphered, ciphered, pub_sess, messageSize);
 
 	mpz_clear(ec.p);
 	mpz_clear(ec.a);

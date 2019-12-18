@@ -30,6 +30,7 @@ struct pe
 	mpz_t k_sess;
 };
 
+int mSize;
 struct parameters ec; // parâmetros globais
 struct coord points[nPoints]; //pontos[índice do char]
 struct pe alice; // chave pública e privada
@@ -55,3 +56,5 @@ void findPoints();
 
 void eccCipher(struct coord *c2, struct coord *c1, int size);
 void eccDecipher(struct coord *d, struct coord *c2, struct coord c1, int s);
+
+void test(int messageSize);

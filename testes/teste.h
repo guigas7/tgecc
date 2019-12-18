@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <math.h>
 #include <gmp.h>
+#include <sys/time.h>
 
 #define INF 1
 #define nPoints 20
@@ -30,10 +31,13 @@ struct pe
 	mpz_t k_sess;
 };
 
+int mSize;
 struct parameters ec; // parâmetros globais
 struct coord points[nPoints]; //pontos[índice do char]
 struct pe alice; // chave pública e privada
 struct pe bob; // chave pública e privada
+
+double timestamp(void);
 
 void showPoints();
 void showPoint(struct coord p);
@@ -55,3 +59,5 @@ void findPoints();
 
 void eccCipher(struct coord *c2, struct coord *c1, int size);
 void eccDecipher(struct coord *d, struct coord *c2, struct coord c1, int s);
+
+void test(long int messageSize);
