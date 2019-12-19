@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <math.h>
 #include <gmp.h>
+#include <sys/time.h>
 
 #define INF 1
 #define nPoints 20
@@ -35,6 +36,8 @@ struct parameters ec; // parâmetros globais
 struct coord points[nPoints]; //pontos[índice do char]
 struct pe alice; // chave pública e privada
 struct pe bob; // chave pública e privada
+
+double timestamp(void);
 
 void showPoints();
 void showPoint(struct coord p);

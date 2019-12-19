@@ -1,5 +1,13 @@
 #include "teste.h"
 
+double timestamp(void)
+{
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+
+    return ((double)(tp.tv_sec * 1000.0 + tp.tv_usec / 1000.0));
+}
+
 inline void modp(mpz_t rop, mpz_t a)
 {
 	mpz_t tmp;
@@ -484,25 +492,33 @@ inline void eccDecipher(struct coord *d, struct coord *c2, struct coord c1, int 
 }
 
 void test(int messageSize) {
+	double inicial, final;
+	FILE *outp = fopen("outputig.txt", "a");
 	long int groupAmnt = (messageSize % 15 == 0 ? messageSize/15 : messageSize/15 + 1);
 	// Cifra
 	struct coord *ciphered = malloc(groupAmnt * sizeof(struct coord));
 	struct coord pub_sess;
+	inicial = timestamp();
 	eccCipher(ciphered, &pub_sess, messageSize);
-
+	final = timestamp() - inicial;
+	fprintf(outp, "%d - %f - ", messageSize, final);
 	// Decifra
 	struct coord *deciphered = malloc(groupAmnt * sizeof(struct coord));
+	inicial = timestamp();
 	eccDecipher(deciphered, ciphered, pub_sess, messageSize);
+	final = timestamp() - inicial;
+	fprintf(outp, "%f\n", final);
 
-	// for (int i = 0; i < groupAmnt; i++) {
-	// 	if (mpz_cmp(points[i % nPoints].x, deciphered[i].x) != 0 || mpz_cmp(points[i % nPoints].y, deciphered[i].y) != 0) {
-	// 		printf("teste %messageSize: ponto %d incorreto\n", i);
-	// 	}
-	// 	mpz_clear(ciphered[i].x);
-	// 	mpz_clear(ciphered[i].y);
-	// 	mpz_clear(deciphered[i].x);
-	// 	mpz_clear(deciphered[i].y);
-	// }
+	for (int i = 0; i < groupAmnt; i++) {
+		// if (mpz_cmp(points[i % nPoints].x, deciphered[i].x) != 0 || mpz_cmp(points[i % nPoints].y, deciphered[i].y) != 0) {
+		// 	printf("teste %messageSize: ponto %d incorreto\n", i);
+		// }
+		mpz_clear(ciphered[i].x);
+		mpz_clear(ciphered[i].y);
+		mpz_clear(deciphered[i].x);
+		mpz_clear(deciphered[i].y);
+	}
+	fclose(outp);
 }
 
 void main()
@@ -552,25 +568,25 @@ void main()
 	// gmp_printf("PU[Alice]:[%Zd,%Zd]\n", alice.pu.x, alice.pu.y);
 	// gmp_printf("PU[Bob]:[%Zd,%Zd]\n", bob.pu.x, bob.pu.y);
 
-	// test(1);
-	// test(2);
-	// test(4);
-	// test(8);
-	// test(16);
-	// test(32);
-	// test(64);
-	// test(128);
-	// test(256);
-	// test(512);
-	// test(1024);
-	// test(2048);
-	// test(4096);
-	// test(8192);
-	// test(16384);
-	// test(32768);
-	// test(65536);
-	// test(131072);
-	// test(262144);
+	test(1);
+	test(2);
+	test(4);
+	test(8);
+	test(16);
+	test(32);
+	test(64);
+	test(128);
+	test(256);
+	test(512);
+	test(1024);
+	test(2048);
+	test(4096);
+	test(8192);
+	test(16384);
+	test(32768);
+	test(65536);
+	test(131072);
+	test(262144);
 	test(524288);
 
 

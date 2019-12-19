@@ -575,14 +575,14 @@ void main()
 	test(512);
 	test(1024);
 	test(2048);
-	// test(4096);
-	// test(8192);
-	// test(16384);
-	// test(32768);
-	// test(65536);
-	// test(131072);
-	// test(262144);
-	// test(524288);
+	test(4096);
+	test(8192);
+	test(16384);
+	test(32768);
+	test(65536);
+	test(131072);
+	test(262144);
+	test(524288);
 
 
 	mpz_clear(ec.p);
