@@ -8,14 +8,14 @@ double timestamp(void)
     return ((double)(tp.tv_sec * 1000.0 + tp.tv_usec / 1000.0));
 }
 
-inline void modp(mpz_t rop, mpz_t a)
+inline void modn(mpz_t rop, mpz_t a)
 {
 	mpz_t tmp;
 	mpz_init_set(tmp, a);
 	if(mpz_cmp_ui(a, 0) < 0) {
-		mpz_add(tmp, a, ec.p);
+		mpz_add(tmp, a, ec.n);
 	}
-	mpz_mod(rop, tmp, ec.p);
+	mpz_mod(rop, tmp, ec.n);
 	mpz_clear(tmp);
 }
 
@@ -25,7 +25,7 @@ inline void eccDbl(struct coord *rop, struct coord p) /* Double operation */
 	mpz_init(s0);
 	// s0 = -p.y
 	mpz_neg(s0, p.y);
-	modp(s0, s0);
+	modn(s0, s0);
 	// if (p.y == -p.y || p.y == 0)
 	if (mpz_cmp(p.y, s0) == 0 || mpz_cmp_ui(p.y, 0) == 0) {
 		// gmp_printf("ret inf, y=0 ou igual -y: (%Zd, %Zd)\n (%Zd, %zd)\n", p.x, p.y);
@@ -39,42 +39,42 @@ inline void eccDbl(struct coord *rop, struct coord p) /* Double operation */
 		mpz_init(s2);
 		mpz_mul_ui(s0, p.y, 2); // s0 = p.y * 2
 		//gmp_printf("p.y * 2: %Zd\n", s0);
-		modp(s1, s0); // s1 = mod(p.y * 2)
+		modn(s1, s0); // s1 = mod(p.y * 2)
 		//gmp_printf("mod(p.y * 2): %Zd\n", s1);
 		multInv(s0, s1); // s0 = multinv(mod(p.y * 2))
 
-		modp(s1, s0); // s1 = mod(multinv(mod(p.y * 2)))
+		modn(s1, s0); // s1 = mod(multinv(mod(p.y * 2)))
 
 		mpz_mul(s0, p.x, p.x); // s0 = p.x * p.x
-		modp(s0, s0);
+		modn(s0, s0);
 		mpz_mul_ui(s2, s0, 3); // s2 = (p.x * p.x) * 3
-		modp(s2, s2);
+		modn(s2, s2);
 		mpz_add(s0, s2, ec.a); // s0 = (p.x * p.x) * 3 + A
-		modp(s2, s0); // s2 = mod((p.x * p.x) * 3 + A)
+		modn(s2, s0); // s2 = mod((p.x * p.x) * 3 + A)
 		mpz_mul(s0, s2, s1); // s0 = mod((p.x * p.x) * 3 + A) * mod(multInv(mod(p.y * 2)))
 		// s = mod(mod((p.x * p.x) * 3 + A) * mod(multInv(mod(p.y * 2))))
-		modp(s, s0);
+		modn(s, s0);
 		//gmp_printf("slope: %Zd\n", s);
 
 		//~ *** Rx ***
 		// rop.x = mod(mod(s * s) - mod(p.x * 2))
 		mpz_mul(s0, s, s); // s0 = (s * s)		
-		modp(s1, s0); // s1 = mod(s * s)
+		modn(s1, s0); // s1 = mod(s * s)
 		mpz_mul_ui(s0, p.x, 2); // s0 = p.x * 2
-		modp(s2, s0); // s2 = mod(p.x * 2)
+		modn(s2, s0); // s2 = mod(p.x * 2)
 		mpz_sub(s0, s1, s2); // s0 = mod(s * s) - mod(p.x * 2)
 		// rop.x = mod(mod(s * s) - mod(p.x * 2)) - return
-		modp(rop->x, s0);
+		modn(rop->x, s0);
 		//gmp_printf("novox: %Zd\n", rop->x);
 		//~ *** Ry ***
 		// rop.y = mod(mod(s * mod(p.x - rop.x)) - p.y)
 		mpz_sub(s0, p.x, rop->x); // s0 = p.x - rop.x
-		modp(s1, s0); // s1 = mod(p.x - rop.x)
+		modn(s1, s0); // s1 = mod(p.x - rop.x)
 		mpz_mul(s0, s, s1); // s0 = s * mod(p.x - rop.x)
-		modp(s1, s0); // s1 = mod(s * mod(p.x - rop.x))
+		modn(s1, s0); // s1 = mod(s * mod(p.x - rop.x))
 		mpz_sub(s0, s1, p.y); // s0 = mod(s * mod(p.x - rop.x)) - p.y
 		// rop.y = mod(mod(s * mod(p.x - rop.x)) - p.y) - return
-		modp(rop->y, s0);
+		modn(rop->y, s0);
 		//gmp_printf("novoy: %Zd\n", rop->y);
 		rop->inf = 0;
 
@@ -134,35 +134,35 @@ void eccAdd(struct coord *rop, struct coord p, struct coord q)
 	// s0 = q.y - p.y
 	mpz_sub(s0, q.y, p.y);
 	// s1 = mod(q.y - p.y)
-	modp(s1, s0);
+	modn(s1, s0);
 	//gmp_printf("mod(q.y - p.y): %Zd\n", s1);
 	// s0 = q.x - p.x
 	mpz_sub(s0, q.x, p.x);
 	// s2 = mod(q.x - p.x)
-	modp(s2, s0);
+	modn(s2, s0);
 	// s0 = multInv(mod(q.x - p.x))
 	multInv(s0, s2);
 	// s0 = mod(multInv(mod(q.x - p.x)))
-	modp(s0, s0);
+	modn(s0, s0);
 	// s2 = mod(1.y - p.y) * mod(multInv(mod(q.x - p.x)))
 	mpz_mul(s2, s1, s0);
 	// s = mod(mod(1.y - p.y) * mod(multInv(mod(q.x - p.x))))
-	modp(s, s2);
+	modn(s, s2);
 
 	//~ *** Rx ***
 	// rop.x = mod(mod(s * s) - p.x) - q.x)
 	// s0 = s * s
 	mpz_mul(s0, s, s);
 	// s1 = mod(s * s)
-	modp(s1, s0);
+	modn(s1, s0);
 	// s0 = mod(s * s) - p.x
 	mpz_sub(s0, s1, p.x);
 	// s1 = mod(mod(s * s) - p.x)
-	modp(s1, s0);
+	modn(s1, s0);
 	// s0 = mod(mod(s * s) - p.x) - q.x;
 	mpz_sub(s0, s1, q.x);
 	// rop.x = mod(mod(s * s) - p.x) - q.x) - return
-	modp(rop->x, s0);
+	modn(rop->x, s0);
 	
 	//~ *** Ry ***
 	// rop.y = mod(mod(s * mod(p.x - rop.x)) - p.y)
@@ -170,15 +170,15 @@ void eccAdd(struct coord *rop, struct coord p, struct coord q)
 	// s0 = p.x - rop.x
 	mpz_sub(s0, p.x, rop->x);
 	// s1 = mod(p.x - rop.x)
-	modp(s1, s0);
+	modn(s1, s0);
 	// s0 = s * mod(p.x - rop.x)
 	mpz_mul(s0, s, s1);
 	// s1 = mod(s * mod(p.x - rop.x))
-	modp(s1, s0);
+	modn(s1, s0);
 	// s0 = mod(s * mod(p.x - rop.x)) - p.y
 	mpz_sub(s0, s1, p.y);
 	// rop.y = mod(mod(s * mod(p.x - rop.x)) - p.y) - return
-	modp(rop->y, s0);
+	modn(rop->y, s0);
 	rop->inf = 0;
 
 	mpz_clear(s);
@@ -198,7 +198,7 @@ inline void eccSub(struct coord *rop, struct coord p, struct coord q)
 	// q1.y = mod(q.y * -1);
 	mpz_neg(s0, q.y);
 	q1.inf = q.inf;
-	modp(q1.y, s0);
+	modn(q1.y, s0);
 	eccAdd(rop, p, q1);
 	mpz_clear(s0);
 	mpz_clear(q1.x);
@@ -245,52 +245,52 @@ void mult(struct coord *rop, mpz_t k, struct coord p)
 	mpz_clear(aux.y);
 }
 
-inline void euclidian(mpz_t rop, mpz_t a) /* Extended Euclidian algorithm */
-{
-	mpz_t u, v, g, u1, v1, g1, q, aux;
-
-	mpz_init_set_ui(u,1);
-	mpz_init_set_ui(v,0);
-	mpz_init_set(g, a);
-	mpz_init_set_ui(u1,0);
-	mpz_init_set_ui(v1,1);
-	mpz_init_set(g1, ec.p);
-	mpz_init(q);
-	mpz_init(aux);
-
-	//~ while (g1 != 0)
-	while(mpz_cmp_ui(g1, 0) != 0)
-	{
-		//~ q = g / g1;
-		mpz_fdiv_q(q, g, g1); 
-		
-		//~ t1 = u - q * u1;
-		mpz_mul(aux, q, u1);
-		mpz_sub(u1, u, aux);
-		
-		//~ t2 = v - q * v1;
-		mpz_mul(aux, q, v1);
-		mpz_sub(v1, v, aux);
-
-		//~ t3 = g - q * g1;
-		mpz_mul(aux, q, g1);
-		mpz_sub(g1, g, aux);
-
+inline void euclidian(mpz_t rop, mpz_t a) /* Extended Euclidian algorithm */	
+{	
+	mpz_t u, g, u1, g1, q, t1, t3, aux;	
+	mpz_init_set_ui(u,1);		
+	mpz_init_set(g, a);	
+	mpz_init_set_ui(u1,0);	
+	mpz_init_set(g1, ec.n);	
+	mpz_init(q);	
+	mpz_init(t1);		
+	mpz_init(t3);	
+	mpz_init(aux);	
+	//~ while (g1 != 0)	
+	while(mpz_cmp_ui(g1, 0) != 0)	
+	{	
+		//~ q = g / g1;	
+		mpz_fdiv_q(q, g, g1); 	
+			
+		//~ t1 = u - q * u1;	
+		mpz_mul(aux, q, u1);	
+		mpz_sub(t1, u, aux);	
 		mpz_set(u, u1);
-		mpz_set(v, v1);
-		mpz_set(g, g1);
+		mpz_set(u1, t1);
+			
+		//~ t2 = v - q * v1;	
+		// mpz_mul(aux, q, v1);	
+		// mpz_sub(t2, v, aux);	
+		// mpz_set(v, v1);	
+		// mpz_set(v1, t2);	
+
+		//~ t3 = g - q * g1;	
+		mpz_mul(aux, q, g1);	
+		mpz_sub(t3, g, aux);
+		mpz_set(g, g1);	
+		mpz_set(g1, t3);	
 	}
 	
 	//return
-	modp(rop, u);
+	modn(rop, u);
 
 	mpz_clear(u);
-	mpz_clear(v);
 	mpz_clear(g);
 	mpz_clear(u1);
-	mpz_clear(v1);
 	mpz_clear(g1);
 	mpz_clear(q);
+	mpz_clear(t1);	
+	mpz_clear(t3);
 	mpz_clear(aux);
 }
 
@@ -446,14 +446,14 @@ inline void eccCipher(struct coord *c2, struct coord *c1, int size)
 		// ponto cifrado 2 é a soma do ponto claro com a multiplicação da chave
 		// privada de sessão com a chave pública do destinatário
 		mult(&aux, alice.k_sess, bob.pu); // trocar k por chave privada de sessão
-		//gmp_printf("cipher: adding (%Zd, %Zd)\n (%Zd, %Zd)\n", points[i % nPoints].x, points[i % nPoints].y, aux.x, aux.y);
+		// gmp_printf("cipher: adding (%Zd, %Zd)\n (%Zd, %Zd)\n", points[i % nPoints].x, points[i % nPoints].y, aux.x, aux.y);
 
 		eccAdd(&c2[i], points[i % nPoints], aux);
-		//gmp_printf("(%Zd, %Zd)\n", points[i % nPoints].x, points[i % nPoints].y);
+		// gmp_printf("(%Zd,%Zd)\n", points[i % nPoints].x, points[i % nPoints].y);
 	}
 
 	// printf("Generated ciphered message in points: \n");
-	// for (int i = 0; i < groupAmnt; i++) {
+	// for (int i = 0; i < size; i++) {
 	// 	gmp_printf("(%Zd,%Zd) ", c2[i].x, c2[i].y);
 	// }
 	// printf("\n");
@@ -479,7 +479,7 @@ inline void eccDecipher(struct coord *d, struct coord *c2, struct coord c1, int 
 	}
 
 	// printf("Generated deciphered message in points: \n");
-	// for (int i = 0; i < groupAmnt; i++) {
+	// for (int i = 0; i < size; i++) {
 	// 	gmp_printf("(%Zd,%Zd) ", d[i].x, d[i].y);
 	// }
 	// printf("\n");
@@ -516,6 +516,49 @@ void test(long int messageSize) {
 	fclose(outp);
 }
 
+void print_hash(unsigned char hash[]) {
+    int idx;
+    for (idx = 0; idx < 32; idx++)
+        printf("%02x", hash[idx]);
+    printf("\n");
+}
+
+void hash(mpz_t rop, mpz_t m)
+{
+	// hashes the hexadecimal (in lower case) representation of m
+	// returns the decimal representation of the hash in rop
+    int res;
+	int size = mpz_sizeinbase(m, 2);
+	// gmp_printf("\n - m:%Zd (%d bytes)\n", m, size);
+    unsigned char hash[32];
+	unsigned char *message = malloc(sizeof(unsigned char) * size + 1);
+	char txt[64];
+	// transform mpz_t m in string message
+	FILE *temp = fopen("num.temp", "w+");
+	mpz_out_str(temp, 16, m);
+	fseek(temp, 0L, SEEK_SET);
+	fgets (message, 65, temp);
+	fclose(temp);
+
+    SHA256_CTX ctx;
+	sha256_init(&ctx);
+	sha256_update(&ctx, message, strlen(message));
+	sha256_final(&ctx, hash, &res, size, 23);
+	//print_hash(hash);
+	// convert unsigned char string to char string
+	int a = 0;
+	for (int i = 0; i < 32; i++) {
+		sprintf(&txt[a], "%02x", hash[i]);
+		a+=2;
+	}
+	//printf("txt: %s\n", txt);
+    // write hash in rop
+	mpz_set_str(rop, txt, 16);
+	//gmp_printf("rop: %Zd\n", rop);
+	modn(rop, rop);
+	//gmp_printf("mod(rop): %Zd\n", rop);
+}
+
 void main()
 {
 	mpz_init_set_str(ec.p, "FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF", 16);
@@ -525,8 +568,22 @@ void main()
 	mpz_init_set_str(ec.G.y, "4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5", 16);
 	ec.G.inf = 0;
 	mpz_init_set_str(ec.n, "FFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551", 16);
+	
+	// FILE *num = fopen("num.temp", "w+");
+	// char val[64];
+	// mpz_out_str(num, 16, ec.a);
+	// fseek(num, 0L, SEEK_SET);
+	// fgets (val, 65, num);
+	// for (int i = 0; i < 64; i++) {
+	// 	printf("%d: %c\n", i, val[i]);
+	// }
+	// printf("\n");
+	// mpz_t teste;
+	// mpz_init_set_str(teste, val, 16);
+	// gmp_printf("teste: %Zd\n", teste);
+	// fclose(num);
 
-	// mpz_init_set_ui(ec.p, 23);
+	// mpz_init_set_ui(ec.n, 23);
 	// mpz_init_set_ui(ec.a, 1);
 	// mpz_init_set_ui(ec.b, 4);
 	// mpz_init_set_ui(ec.G.x, 1);
@@ -534,7 +591,7 @@ void main()
 	// ec.G.inf = 0;
 	// mpz_init_set_ui(ec.n, 3);
 
-	// gmp_printf("ec.p: %Zd\n", ec.p);
+	// gmp_printf("ec.n: %Zd\n", ec.n);
 	// gmp_printf("ec.a: %Zd\n", ec.a);
 	// gmp_printf("ec.b: %Zd\n", ec.b);
 	
@@ -559,36 +616,36 @@ void main()
 
 	//showPoints();
 	generateKeys();
-	// gmp_printf("G:[%Zd,%Zd]\n", ec.G.x, ec.G.y);
-	// gmp_printf("PU[Alice]:[%Zd,%Zd]\n", alice.pu.x, alice.pu.y);
-	// gmp_printf("PU[Bob]:[%Zd,%Zd]\n", bob.pu.x, bob.pu.y);
+	gmp_printf("G:[%Zd,%Zd]\n", ec.G.x, ec.G.y);
+	gmp_printf("PU[Alice]:[%Zd,%Zd]\n", alice.pu.x, alice.pu.y);
+	gmp_printf("PU[Bob]:[%Zd,%Zd]\n", bob.pu.x, bob.pu.y);
 
 	test(1);
-	test(2);
-	test(4);
-	test(8);
-	test(16);
-	test(32);
-	test(64);
-	test(128);
-	test(256);
-	test(512);
-	test(1024);
-	test(2048);
-	test(4096);
-	test(8192);
-	test(16384);
-	test(32768);
-	test(65536);
-	test(131072);
-	test(262144);
-	test(524288);
+	// test(2);
+	// test(4);
+	// test(8);
+	// test(16);
+	// test(32);
+	// test(64);
+	// test(128);
+	// test(256);
+	// test(512);
+	// test(1024);
+	// test(2048);
+	// test(4096);
+	// test(8192);
+	// test(16384);
+	// test(32768);
+	// test(65536);
+	// test(131072);
+	// test(262144);
+	// test(524288);
 
 
-	mpz_clear(ec.p);
-	mpz_clear(ec.a);
-	mpz_clear(ec.b);
-	mpz_clear(ec.G.x);
-	mpz_clear(ec.G.y);
 	mpz_clear(ec.n);
+	// mpz_clear(ec.a);
+	// mpz_clear(ec.b);
+	// mpz_clear(ec.G.x);
+	// mpz_clear(ec.G.y);
+	// mpz_clear(ec.n);
 }

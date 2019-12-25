@@ -4,6 +4,9 @@
 #include <math.h>
 #include <gmp.h>
 #include <sys/time.h>
+#include <string.h>
+#include "sha256.c"
+#include <ctype.h>
 
 #define INF 1
 #define nPoints 20
@@ -43,6 +46,7 @@ void showPoints();
 void showPoint(struct coord p);
 
 void modn(mpz_t rop, mpz_t a);
+void modp(mpz_t rop, mpz_t a);
 
 void eccDbl(struct coord *rop, struct coord p);
 void eccAdd(struct coord *rop, struct coord p, struct coord q);
@@ -59,4 +63,5 @@ void findPoints();
 void eccCipher(struct coord *c2, struct coord *c1, int size);
 void eccDecipher(struct coord *d, struct coord *c2, struct coord c1, int s);
 
-void test(int messageSize);
+void test(long int messageSize);
+void print_hash(unsigned char hash[]);

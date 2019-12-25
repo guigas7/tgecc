@@ -166,7 +166,7 @@ void sha256_final(SHA256_CTX * ctx, uchar hash[], int *result, int size, int P)
 	}
 	//~ Hash to integer q
 	char *buf = malloc(size + 3);
-	printf(" - sha256(m):\t");
+	// printf(" - sha256(m):\t");
 	//for (i = 0; i < size; ++i)
 	{
 		//printf("%02x ", hash[i]);

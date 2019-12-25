@@ -36,9 +36,9 @@ void modp(mpz_t rop, mpz_t a)
 	mpz_t tmp;
 	mpz_init_set(tmp, a);
 	if(mpz_cmp_ui(a, 0) < 0) {
-		mpz_add(tmp, a, ec.p);
+		mpz_add(tmp, a, ec.n);
 	}
-	mpz_mod(rop, tmp, ec.p);
+	mpz_mod(rop, tmp, ec.n); // return
 	mpz_clear(tmp);
 }
 
@@ -281,7 +281,7 @@ void euclidian(mpz_t rop, mpz_t a) /* Extended Euclidian algorithm */
 	mpz_init_set(g, a);
 	mpz_init_set_ui(u1,0);
 	mpz_init_set_ui(v1,1);
-	mpz_init_set(g1, ec.p);
+	mpz_init_set(g1, ec.n);
 	mpz_init(q);
 	mpz_init(t1);
 	mpz_init(t1t);
@@ -538,7 +538,7 @@ void eccCipher(struct coord *c2, struct coord *c1, int size)
 
 	printf("Generated ciphered message in points: \n");
 	for (int i = 0; i < groupAmnt; i++) {
-		gmp_printf("(%Zd,%Zd) ", c2[i].x, c2[i].y);
+		gmp_printf("(%Zd,%Zd)\n", c2[i].x, c2[i].y);
 	}
 	printf("\n");
 	mpz_clear(aux.x);
@@ -566,7 +566,7 @@ void eccDecipher(struct coord *d, struct coord *c2, struct coord c1, int size)
 
 	printf("Generated deciphered message in points: \n");
 	for (int i = 0; i < groupAmnt; i++) {
-		gmp_printf("(%Zd,%Zd) ", d[i].x, d[i].y);
+		gmp_printf("(%Zd,%Zd)\n", d[i].x, d[i].y);
 	}
 	printf("\n");
 	mpz_clear(aux.x);
