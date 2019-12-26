@@ -438,9 +438,6 @@ inline void eccCipher(struct coord *c2, struct coord *c1, int size)
 	mult(c1, alice.k_sess, ec.G);
 	//printf("pontos enviados: \n");
 	for (int i = 0; i < size; i++) {
-		mpz_init(c2[i].x);
-		mpz_init(c2[i].y);
-		c2[i].inf = 0;
 		// ponto cifrado 2 é a soma do ponto claro com a multiplicação da chave
 		// privada de sessão com a chave pública do destinatário
 		mult(&aux, alice.k_sess, bob.pu); // trocar k por chave privada de sessão
@@ -465,9 +462,6 @@ inline void eccDecipher(struct coord *d, struct coord *c2, struct coord c1, int 
 	mpz_init(aux.x);
 	mpz_init(aux.y);
 	for (int i = 0; i < size; i++) {
-		mpz_init(d[i].x);
-		mpz_init(d[i].y);
-		d[i].inf = 0;
 		// ponto decifrado é igual a subtração entre o ponto cifrado e o resultado da
 		// multiplicação entre a chave privada do destinatário com a chave pública de sessão
 		mult(&aux, bob.k, c1);
@@ -676,13 +670,22 @@ void test(long int messageSize) {
 	FILE *outp = fopen("output.txt", "a");
 	// Cifra
 	struct coord *ciphered = malloc(messageSize * sizeof(struct coord));
+	struct coord *deciphered = malloc(messageSize * sizeof(struct coord));
 	struct coord pub_sess;
+
+	for (int i = 0; i < messageSize; i++) {
+		mpz_init(ciphered[i].x);
+		mpz_init(ciphered[i].y);
+		ciphered[i].inf = 0;
+		mpz_init(deciphered[i].x);
+		mpz_init(deciphered[i].y);
+		deciphered[i].inf = 0;
+	}
 	inicial = timestamp();
 	eccCipher(ciphered, &pub_sess, messageSize);
 	final = timestamp() - inicial;
 	fprintf(outp, "%ld - %f - ", messageSize, final);
 	//Decifra
-	struct coord *deciphered = malloc(messageSize * sizeof(struct coord));
 	inicial = timestamp();
 	eccDecipher(deciphered, ciphered, pub_sess, messageSize);
 	final = timestamp() - inicial;

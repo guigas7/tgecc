@@ -27,24 +27,30 @@ struct parameters{
 	// unsigned int h; // não é útil
 };
 
+struct cert
+{
+	mpz_t m;
+	mpz_t s;
+	struct coord R;
+}
+
 struct pe
 {
 	struct coord pu;
 	struct coord id;
 	struct coord ids;
 	struct coord V;
-	struct coord R;
 	mpz_t k;
 	mpz_t k_sess;
 	mpz_t v;
 	mpz_t r;
 	mpz_t sa;
-	mpz_t s;
 };
 
 int mSize;
 struct parameters ec; // parâmetros globais
 struct coord points[nPoints]; //pontos[índice do char]
+mpz_t mess[nPoints];
 struct pe alice; // chave pública e privada
 struct pe bob; // chave pública e privada
 mpz_t seed; // random seed

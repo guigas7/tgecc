@@ -418,6 +418,14 @@ inline void findPoints()
 	points[19].inf = 0;
 }
 
+void genMessages()
+{
+	for (int i = 0; i < 20; i++) {
+		mpz_urandomm(mess[i], state, ec.p);
+		gmp_printf("%Zd\n", mess[i]);
+	}
+}
+
 inline void eccCipher(struct coord *c2, struct coord *c1, int size)
 {
 	// struct coord aux1, aux2;
@@ -585,29 +593,29 @@ inline void generateCertificates()
 	mpz_clear(aux2);
 }
 
-inline void sign(mpz_t m)
+inline void sign(struct *cert, size)
 {
 	mpz_t aux1, aux2;
 	mpz_init(aux1);
 	mpz_init(aux2);
-	mpz_urandomm(alice.r, state, ec.p);
-	// gmp_printf("m: %Zd\n", m);
-	// gmp_printf("r: %Zd\n", alice.r);
-	mult(&alice.R, alice.r, ec.G);
-	// gmp_printf("R.x: %Zd\nR.y: %Zd\n", alice.R.x, alice.R.y);
-
-	// --- Geração de assinatura
-	// s = mod(mod(kb - mod(m * R[0], n), n) * rinv, n)
-	mpz_mul(aux1, m, alice.R.x); // aux1 = m * R[0]
-	modp(aux1, aux1); // aux1 = mod(m * R[0])
-	// gmp_printf("mod(m * R[0]): %Zd\n", aux1);
-	mpz_sub(aux2, alice.k, aux1); // aux2 = kb - mod(m * R[0])
-	// modp(aux2, aux2); // aux2 = mod(kb - mod(m * R[0]))
-	// gmp_printf("mod(kb - mod(m * R[0])): %Zd\n", aux2);
-	multInv(aux1, alice.r, ec.n); // rinv = inverse_mod(r, n)
-	// gmp_printf("rinv: %Zd\n", aux1);
-	mpz_mul(alice.s, aux2, aux1); // s = mod(kb - mod(m * R[0])) * rinv
-	modn(alice.s, alice.s);
+	for (int i = 0; i < size; i++) {
+		mpz_urandomm(alice.r, state, ec.p);
+		// gmp_printf("m: %Zd\n", m);
+		// gmp_printf("r: %Zd\n", alice.r);
+		mult(&alice.R, alice.r, ec.G);
+		// gmp_printf("R.x: %Zd\nR.y: %Zd\n", alice.R.x, alice.R.y);
+		// --- Geração de assinatura
+		// s = mod(mod(kb - mod(m * R[0], n), n) * rinv, n)
+		mpz_mul(aux1, m, alice.R.x); // aux1 = m * R[0]
+		modp(aux1, aux1); // aux1 = mod(m * R[0])
+		// gmp_printf("mod(m * R[0]): %Zd\n", aux1);
+		mpz_sub(aux2, alice.k, aux1); // aux2 = kb - mod(m * R[0])
+		// modp(aux2, aux2); // aux2 = mod(kb - mod(m * R[0]))
+		// gmp_printf("mod(kb - mod(m * R[0])): %Zd\n", aux2);
+		multInv(aux1, alice.r, ec.n); // rinv = inverse_mod(r, n)
+		// gmp_printf("rinv: %Zd\n", aux1);
+		mpz_mul(alice.s, aux2, aux1); // s = mod(kb - mod(m * R[0])) * rinv
+		modn(alice.s, alice.s);
 	// gmp_printf("s: %Zd\n", alice.s);
 	mpz_clear(aux1);
 	mpz_clear(aux2);
@@ -675,8 +683,7 @@ void test(long int messageSize) {
 	double inicial, final;
 	FILE *outp = fopen("output.txt", "a");
 	// Cifra
-	struct coord *ciphered = malloc(messageSize * sizeof(struct coord));
-	struct coord pub_sess;
+	struct cert *signed = malloc(messageSize * sizeof(struct cert));
 	inicial = timestamp();
 	eccCipher(ciphered, &pub_sess, messageSize);
 	final = timestamp() - inicial;
@@ -746,11 +753,8 @@ void main()
 	// gmp_printf("PU[Bob]:[%Zd,%Zd]\n", bob.pu.x, bob.pu.y);
 	// gmp_printf("priv[Bob]:%Zd\n", bob.k);
 
-	// mpz_t teste;
-	// mpz_init(teste);
-	// mpz_urandomm(teste, state, ec.p);
-	// sign(teste);
-	// printf("%d\n", check(teste));
+	genMessages();
+
 	// mpz_t res, rop;
 	// mpz_init(res);
 	// mpz_init(rop);
