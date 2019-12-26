@@ -644,6 +644,20 @@ void main()
 	// gmp_printf("PU[Alice]:[%Zd,%Zd]\n", alice.pu.x, alice.pu.y);
 	// gmp_printf("PU[Bob]:[%Zd,%Zd]\n", bob.pu.x, bob.pu.y);
 
+	mpz_t teste;
+	struct coord pt;
+	mpz_init_set_str(teste, "115792089210356248762697446949407573529996955224135760342422259061068512044368", 10);
+	mpz_init(pt.x);
+	mpz_init(pt.y);
+	pt.inf = 0;
+	// gmp_printf("%Zd\n%Zd\n", points[0].x, points[0].y);
+	// gmp_printf("%Zd\n%Zd\n", points[1].x, points[1].y);
+	// eccAdd(&pt, points[0], points[0]);
+	// gmp_printf("%Zd\n%Zd\n", pt.x, pt.y);
+	mult(&pt, teste, ec.G);
+	gmp_printf("%Zd\n%Zd\n", pt.x, pt.y);
+
+
 	// test(1);
 	// test(2);
 	// test(4);
@@ -659,8 +673,8 @@ void main()
 	// test(4096);
 	// test(8192);
 	// test(16384);
-	test(32768);
-	// test(65536);
+	// test(32768);
+	// // test(65536);
 	// test(131072);
 	// test(262144);
 	// test(524288);

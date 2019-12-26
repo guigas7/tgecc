@@ -19,13 +19,24 @@ inline void modn(mpz_t rop, mpz_t a)
 	mpz_clear(tmp);
 }
 
+inline void modp(mpz_t rop, mpz_t a)
+{
+	mpz_t tmp;
+	mpz_init_set(tmp, a);
+	if(mpz_cmp_ui(a, 0) < 0) {
+		mpz_add(tmp, a, ec.p);
+	}
+	mpz_mod(rop, tmp, ec.p);
+	mpz_clear(tmp);
+}
+
 inline void eccDbl(struct coord *rop, struct coord p) /* Double operation */
 {
 	mpz_t s0, s, s1, s2;
 	mpz_init(s0);
 	// s0 = -p.y
 	mpz_neg(s0, p.y);
-	modn(s0, s0);
+	modp(s0, s0);
 	// if (p.y == -p.y || p.y == 0)
 	if (mpz_cmp(p.y, s0) == 0 || mpz_cmp_ui(p.y, 0) == 0) {
 		// gmp_printf("ret inf, y=0 ou igual -y: (%Zd, %Zd)\n (%Zd, %zd)\n", p.x, p.y);
@@ -39,42 +50,42 @@ inline void eccDbl(struct coord *rop, struct coord p) /* Double operation */
 		mpz_init(s2);
 		mpz_mul_ui(s0, p.y, 2); // s0 = p.y * 2
 		//gmp_printf("p.y * 2: %Zd\n", s0);
-		modn(s1, s0); // s1 = mod(p.y * 2)
+		modp(s1, s0); // s1 = mod(p.y * 2)
 		//gmp_printf("mod(p.y * 2): %Zd\n", s1);
-		multInv(s0, s1); // s0 = multinv(mod(p.y * 2))
+		multInv(s0, s1, ec.p); // s0 = multinv(mod(p.y * 2))
 
-		modn(s1, s0); // s1 = mod(multinv(mod(p.y * 2)))
+		modp(s1, s0); // s1 = mod(multinv(mod(p.y * 2)))
 
 		mpz_mul(s0, p.x, p.x); // s0 = p.x * p.x
-		modn(s0, s0);
+		modp(s0, s0);
 		mpz_mul_ui(s2, s0, 3); // s2 = (p.x * p.x) * 3
-		modn(s2, s2);
+		modp(s2, s2);
 		mpz_add(s0, s2, ec.a); // s0 = (p.x * p.x) * 3 + A
-		modn(s2, s0); // s2 = mod((p.x * p.x) * 3 + A)
+		modp(s2, s0); // s2 = mod((p.x * p.x) * 3 + A)
 		mpz_mul(s0, s2, s1); // s0 = mod((p.x * p.x) * 3 + A) * mod(multInv(mod(p.y * 2)))
 		// s = mod(mod((p.x * p.x) * 3 + A) * mod(multInv(mod(p.y * 2))))
-		modn(s, s0);
+		modp(s, s0);
 		//gmp_printf("slope: %Zd\n", s);
 
 		//~ *** Rx ***
 		// rop.x = mod(mod(s * s) - mod(p.x * 2))
 		mpz_mul(s0, s, s); // s0 = (s * s)		
-		modn(s1, s0); // s1 = mod(s * s)
+		modp(s1, s0); // s1 = mod(s * s)
 		mpz_mul_ui(s0, p.x, 2); // s0 = p.x * 2
-		modn(s2, s0); // s2 = mod(p.x * 2)
+		modp(s2, s0); // s2 = mod(p.x * 2)
 		mpz_sub(s0, s1, s2); // s0 = mod(s * s) - mod(p.x * 2)
 		// rop.x = mod(mod(s * s) - mod(p.x * 2)) - return
-		modn(rop->x, s0);
+		modp(rop->x, s0);
 		//gmp_printf("novox: %Zd\n", rop->x);
 		//~ *** Ry ***
 		// rop.y = mod(mod(s * mod(p.x - rop.x)) - p.y)
 		mpz_sub(s0, p.x, rop->x); // s0 = p.x - rop.x
-		modn(s1, s0); // s1 = mod(p.x - rop.x)
+		modp(s1, s0); // s1 = mod(p.x - rop.x)
 		mpz_mul(s0, s, s1); // s0 = s * mod(p.x - rop.x)
-		modn(s1, s0); // s1 = mod(s * mod(p.x - rop.x))
+		modp(s1, s0); // s1 = mod(s * mod(p.x - rop.x))
 		mpz_sub(s0, s1, p.y); // s0 = mod(s * mod(p.x - rop.x)) - p.y
 		// rop.y = mod(mod(s * mod(p.x - rop.x)) - p.y) - return
-		modn(rop->y, s0);
+		modp(rop->y, s0);
 		//gmp_printf("novoy: %Zd\n", rop->y);
 		rop->inf = 0;
 
@@ -134,35 +145,35 @@ void eccAdd(struct coord *rop, struct coord p, struct coord q)
 	// s0 = q.y - p.y
 	mpz_sub(s0, q.y, p.y);
 	// s1 = mod(q.y - p.y)
-	modn(s1, s0);
+	modp(s1, s0);
 	//gmp_printf("mod(q.y - p.y): %Zd\n", s1);
 	// s0 = q.x - p.x
 	mpz_sub(s0, q.x, p.x);
 	// s2 = mod(q.x - p.x)
-	modn(s2, s0);
+	modp(s2, s0);
 	// s0 = multInv(mod(q.x - p.x))
-	multInv(s0, s2);
+	multInv(s0, s2, ec.p);
 	// s0 = mod(multInv(mod(q.x - p.x)))
-	modn(s0, s0);
+	modp(s0, s0);
 	// s2 = mod(1.y - p.y) * mod(multInv(mod(q.x - p.x)))
 	mpz_mul(s2, s1, s0);
 	// s = mod(mod(1.y - p.y) * mod(multInv(mod(q.x - p.x))))
-	modn(s, s2);
+	modp(s, s2);
 
 	//~ *** Rx ***
 	// rop.x = mod(mod(s * s) - p.x) - q.x)
 	// s0 = s * s
 	mpz_mul(s0, s, s);
 	// s1 = mod(s * s)
-	modn(s1, s0);
+	modp(s1, s0);
 	// s0 = mod(s * s) - p.x
 	mpz_sub(s0, s1, p.x);
 	// s1 = mod(mod(s * s) - p.x)
-	modn(s1, s0);
+	modp(s1, s0);
 	// s0 = mod(mod(s * s) - p.x) - q.x;
 	mpz_sub(s0, s1, q.x);
 	// rop.x = mod(mod(s * s) - p.x) - q.x) - return
-	modn(rop->x, s0);
+	modp(rop->x, s0);
 	
 	//~ *** Ry ***
 	// rop.y = mod(mod(s * mod(p.x - rop.x)) - p.y)
@@ -170,16 +181,19 @@ void eccAdd(struct coord *rop, struct coord p, struct coord q)
 	// s0 = p.x - rop.x
 	mpz_sub(s0, p.x, rop->x);
 	// s1 = mod(p.x - rop.x)
-	modn(s1, s0);
+	modp(s1, s0);
 	// s0 = s * mod(p.x - rop.x)
 	mpz_mul(s0, s, s1);
 	// s1 = mod(s * mod(p.x - rop.x))
-	modn(s1, s0);
+	modp(s1, s0);
 	// s0 = mod(s * mod(p.x - rop.x)) - p.y
 	mpz_sub(s0, s1, p.y);
 	// rop.y = mod(mod(s * mod(p.x - rop.x)) - p.y) - return
-	modn(rop->y, s0);
+	modp(rop->y, s0);
 	rop->inf = 0;
+
+	modp(rop->x, rop->x);
+	modp(rop->y, rop->y);
 
 	mpz_clear(s);
 	mpz_clear(s0);
@@ -198,7 +212,7 @@ inline void eccSub(struct coord *rop, struct coord p, struct coord q)
 	// q1.y = mod(q.y * -1);
 	mpz_neg(s0, q.y);
 	q1.inf = q.inf;
-	modn(q1.y, s0);
+	modp(q1.y, s0);
 	eccAdd(rop, p, q1);
 	mpz_clear(s0);
 	mpz_clear(q1.x);
@@ -245,13 +259,13 @@ void mult(struct coord *rop, mpz_t k, struct coord p)
 	mpz_clear(aux.y);
 }
 
-inline void euclidian(mpz_t rop, mpz_t a) /* Extended Euclidian algorithm */	
+inline void euclidian(mpz_t rop, mpz_t a, mpz_t md) /* Extended Euclidian algorithm */	
 {	
 	mpz_t u, g, u1, g1, q, t1, t3, aux;	
 	mpz_init_set_ui(u,1);		
 	mpz_init_set(g, a);	
 	mpz_init_set_ui(u1,0);	
-	mpz_init_set(g1, ec.n);	
+	mpz_init_set(g1, md);	
 	mpz_init(q);	
 	mpz_init(t1);		
 	mpz_init(t3);	
@@ -282,7 +296,7 @@ inline void euclidian(mpz_t rop, mpz_t a) /* Extended Euclidian algorithm */
 	}
 	
 	//return
-	modn(rop, u);
+	modp(rop, u);
 
 	mpz_clear(u);
 	mpz_clear(g);
@@ -294,26 +308,22 @@ inline void euclidian(mpz_t rop, mpz_t a) /* Extended Euclidian algorithm */
 	mpz_clear(aux);
 }
 
-inline void multInv(mpz_t rop, mpz_t a) /* Multiplicative inverse */
+inline void multInv(mpz_t rop, mpz_t a, mpz_t md) /* Multiplicative inverse */
 {
 	//~ A * invA mod P == 1
 	// return
-	euclidian(rop, a);
+	euclidian(rop, a, md);
 }
 
 //~ Gerar as chaves públicas e privadas
 inline void generateKeys()
 {
-	mpz_t s0, s1, seed;
-	gmp_randstate_t state;
-	gmp_randinit_mt(state);
-	mpz_init_set_str(seed, "C49D360886E704936A6678E1139D26B7819F7E90", 16);
+	mpz_t s0, s1;
 	mpz_init(s0);
 	mpz_init(s1);
 
 	// alice key pair
-	gmp_randseed(state, seed);
-	mpz_urandomm(s0, state, ec.n); // s0 = rand % n
+	mpz_urandomm(s0, state, ec.p); // s0 = rand % n
 	// PEs[i].k = (rand % p) + 1
 	mpz_init(alice.k);
 	mpz_add_ui(alice.k, s0, 1); //~ Chave privada (k)
@@ -326,11 +336,8 @@ inline void generateKeys()
 	// initialize session key
 	mpz_init(alice.k_sess);
 
-
 	// bob key pair
-	mpz_add(seed, seed, seed);
-	gmp_randseed(state, seed);
-	mpz_urandomm(s0, state, ec.n); // s0 = rand % n
+	mpz_urandomm(s0, state, ec.p); // s0 = rand % n
 	// PEs[i].k = (rand % p) + 1
 	mpz_init(bob.k);
 	mpz_add_ui(bob.k, s0, 1); //~ Chave privada (k)
@@ -345,8 +352,6 @@ inline void generateKeys()
 
 	mpz_clear(s0);
 	mpz_clear(s1);
-	mpz_clear(seed);
-	gmp_randclear(state);
 }
 
 inline void findPoints()
@@ -422,36 +427,25 @@ inline void eccCipher(struct coord *c2, struct coord *c1, int size)
 	// mpz_init(aux2.y);
 	// aux1.inf = 0;
 	// aux2.inf = 0;
-	int groupAmnt;
 	struct coord aux;
 	mpz_init(aux.x);
 	mpz_init(aux.y);
-	// random
-	mpz_t seed;
-	gmp_randstate_t state;
-	gmp_randinit_mt(state);
-	mpz_init_set_str(seed, "C49D360886E704936A6678E1139D26B7819F7E90", 16);
-	gmp_randseed(state, seed);
-	mpz_init(alice.k_sess);
-	mpz_urandomm(alice.k_sess, state, ec.n); // chave privada de sessão
+	mpz_urandomm(alice.k_sess, state, ec.p); // chave privada de sessão
 	// chave pública de sessão c1 = K = kG	mpz_init(c1.x);
 	mpz_init(c1->y);
 	mpz_init(c1->x);
 	c1->inf = 0;
 	mult(c1, alice.k_sess, ec.G);
-	groupAmnt = (size % 15 == 0 ? size/15 : size/15 + 1);
+	long int groupAmnt = (size % 15 == 0 ? size/15 : size/15 + 1);
 	//printf("pontos enviados: \n");
 	for (int i = 0; i < groupAmnt; i++) {
-		mpz_init(c2[i].x);
-		mpz_init(c2[i].y);
-		c2[i].inf = 0;
 		// ponto cifrado 2 é a soma do ponto claro com a multiplicação da chave
 		// privada de sessão com a chave pública do destinatário
 		mult(&aux, alice.k_sess, bob.pu); // trocar k por chave privada de sessão
 		//gmp_printf("cipher: adding (%Zd, %Zd)\n (%Zd, %Zd)\n", points[i % nPoints].x, points[i % nPoints].y, aux.x, aux.y);
 
 		eccAdd(&c2[i], points[i % nPoints], aux);
-		//gmp_printf("(%Zd, %Zd)\n", points[i % nPoints].x, points[i % nPoints].y);
+		// gmp_printf("(%Zd, %Zd)\n", points[i % nPoints].x, points[i % nPoints].y);
 	}
 
 	// printf("Generated ciphered message in points: \n");
@@ -461,21 +455,15 @@ inline void eccCipher(struct coord *c2, struct coord *c1, int size)
 	// printf("\n");
 	mpz_clear(aux.x);
 	mpz_clear(aux.y);
-	mpz_clear(seed);
-	gmp_randclear(state);
 }
 
 inline void eccDecipher(struct coord *d, struct coord *c2, struct coord c1, int size)
 {
-	int groupAmnt;
 	struct coord aux;
 	mpz_init(aux.x);
 	mpz_init(aux.y);
-	groupAmnt = (size % 15 == 0 ? size/15 : size/15 + 1);
+	long int groupAmnt = (size % 15 == 0 ? size/15 : size/15 + 1);
 	for (int i = 0; i < groupAmnt; i++) {
-		mpz_init(d[i].x);
-		mpz_init(d[i].y);
-		d[i].inf = 0;
 		// ponto decifrado é igual a subtração entre o ponto cifrado e o resultado da
 		// multiplicação entre a chave privada do destinatário com a chave pública de sessão
 		mult(&aux, bob.k, c1);
@@ -483,7 +471,7 @@ inline void eccDecipher(struct coord *d, struct coord *c2, struct coord c1, int 
 	}
 
 	// printf("Generated deciphered message in points: \n");
-	// for (int i = 0; i < groupAmnt; i++) {
+	// for (int i = 0; i < size; i++) {
 	// 	gmp_printf("(%Zd,%Zd) ", d[i].x, d[i].y);
 	// }
 	// printf("\n");
@@ -491,28 +479,225 @@ inline void eccDecipher(struct coord *d, struct coord *c2, struct coord c1, int 
 	mpz_clear(aux.y);
 }
 
-void test(int messageSize) {
+void print_hash(unsigned char hash[]) {
+    int idx;
+    for (idx = 0; idx < 32; idx++)
+        printf("%02x", hash[idx]);
+    printf("\n");
+}
+
+void hash(mpz_t rop, mpz_t m)
+{
+	// hashes the hexadecimal (in lower case) representation of m
+	// returns the decimal representation of the hash in rop
+    int res;
+	int size = mpz_sizeinbase(m, 2);
+	// gmp_printf("\n - m:%Zd (%d bytes)\n", m, size);
+    unsigned char hash[32];
+	unsigned char *message = malloc(sizeof(unsigned char) * size + 1);
+	char txt[64];
+	// transform mpz_t m in string message
+	FILE *temp = fopen("num.temp", "w+");
+	mpz_out_str(temp, 16, m);
+	fseek(temp, 0L, SEEK_SET);
+	fgets (message, 65, temp);
+	fclose(temp);
+
+    SHA256_CTX ctx;
+	sha256_init(&ctx);
+	sha256_update(&ctx, message, strlen(message));
+	sha256_final(&ctx, hash, &res, size, 23);
+	//print_hash(hash);
+	// convert unsigned char string to char string
+	int a = 0;
+	for (int i = 0; i < 32; i++) {
+		sprintf(&txt[a], "%02x", hash[i]);
+		a+=2;
+	}
+	//printf("txt: %s\n", txt);
+    // write hash in rop
+	mpz_set_str(rop, txt, 16);
+	//gmp_printf("rop: %Zd\n", rop);
+	modp(rop, rop);
+	//gmp_printf("mod(rop): %Zd\n", rop);
+}
+
+void generateCertificates()
+{
+	// Chaves e IDs
+	mpz_init_set_str(alice.id.x, "25992258928441372838190306754026437895674821091948799811836327659484854798868", 10);
+	mpz_init_set_str(alice.id.y, "39227732877500211262332505102593161927141165977758306466170574199348208861497", 10);
+	alice.id.inf = 0;
+	mpz_init(alice.ids.x);
+	mpz_init(alice.ids.y);
+	alice.ids.inf = 0;
+	// --- Anonimização
+	mpz_t aux1, aux2, aux3;
+	mpz_init(aux1);
+	mpz_init(aux2);
+	mpz_urandomm(alice.k_sess, state, ec.p);
+	// mpz_set_str(alice.k_sess, "84967243190047041403031108278624187342675008342734880731713180865595397205580", 10);
+	// ror = Integer(u) | Integer(IDb[0])
+	mpz_ior(aux1, alice.k_sess, alice.id.x);
+	// gmp_printf("ior: %Zd\n", aux1);
+	// st = hashlib.sha256(str(ror)).hexdigest(); rhash = Integer(mod(Integer(st, 16), n))
+	hash(aux2, aux1);
+	modp(aux2, aux2);
+	// gmp_printf("rhash: %Zd\n", aux2);
+	mult(&alice.ids, aux2, ec.G);
+	// gmp_printf("IDc.x: %Zd\nIDc.y: %Zd\n", alice.ids.x, alice.ids.y);
+	// --- Geração de certificado
+	mpz_init(alice.v);
+	mpz_init(alice.V.x);
+	mpz_init(alice.V.y);
+	alice.V.inf = 0;
+	mpz_urandomm(alice.v, state, ec.p);
+	// gmp_printf("v: %Zd\n", alice.v);
+	mult(&alice.V, alice.v, ec.G);
+	// gmp_printf("V.x: %Zd\nV.y: %Zd\n", alice.V.x, alice.V.y);
+	// ror = Integer(IDc[0]) | Integer(V[0])
+	mpz_ior(aux1, alice.ids.x, alice.V.x);
+	// gmp_printf("ior: %Zd\n", aux1);
+	//st = hashlib.sha256(str(ror)).hexdigest(); rhash = Integer(mod(Integer(st, 16), n))
+	hash(aux2, aux1);
+	modn(aux2, aux2);
+	// gmp_printf("rhash: %Zd\n", aux2);
+	// sa = mod(mod(ka * rhash, n) + v, n)
+	mpz_init(alice.sa);
+	mpz_mul(aux1, bob.k, aux2); // aux1 = ka * mod(rhash)
+	modn(aux1, aux1); // aux1 = mod(ka * mod(rhash))
+	mpz_add(aux2, aux1, alice.v); // aux2 = mod(ka * mod(rhash)) + v
+	modn(alice.sa, aux2); // sa = mod(mod(ka * mod(rhash)) + v)
+	// gmp_printf("sa: %Zd\n", alice.sa);
+
+	// initialize signature values
+	mpz_init(alice.r);
+	mpz_init(alice.R.x);
+	mpz_init(alice.R.y);
+	alice.R.inf = 0;
+	mpz_init(alice.s);
+
+	mpz_clear(aux1);
+	mpz_clear(aux2);
+}
+
+void sign(mpz_t m)
+{
+	mpz_t aux1, aux2;
+	mpz_init(aux1);
+	mpz_init(aux2);
+	mpz_urandomm(alice.r, state, ec.p);
+	// gmp_printf("m: %Zd\n", m);
+	// gmp_printf("r: %Zd\n", alice.r);
+	mult(&alice.R, alice.r, ec.G);
+	// gmp_printf("R.x: %Zd\nR.y: %Zd\n", alice.R.x, alice.R.y);
+
+	// --- Geração de assinatura
+	// s = mod(mod(kb - mod(m * R[0], n), n) * rinv, n)
+	mpz_mul(aux1, m, alice.R.x); // aux1 = m * R[0]
+	modp(aux1, aux1); // aux1 = mod(m * R[0])
+	// gmp_printf("mod(m * R[0]): %Zd\n", aux1);
+	mpz_sub(aux2, alice.k, aux1); // aux2 = kb - mod(m * R[0])
+	// modp(aux2, aux2); // aux2 = mod(kb - mod(m * R[0]))
+	// gmp_printf("mod(kb - mod(m * R[0])): %Zd\n", aux2);
+	multInv(aux1, alice.r, ec.n); // rinv = inverse_mod(r, n)
+	// gmp_printf("rinv: %Zd\n", aux1);
+	mpz_mul(alice.s, aux2, aux1); // s = mod(kb - mod(m * R[0])) * rinv
+	modn(alice.s, alice.s);
+	// gmp_printf("s: %Zd\n", alice.s);
+	mpz_clear(aux1);
+	mpz_clear(aux2);
+}
+
+int check(mpz_t m)
+{
+	int ret;
+	struct coord aux1, aux2, aux3;
+	mpz_t s0, s1;
+	mpz_init(s0);
+	mpz_init(s1);
+	mpz_init(aux1.x);
+	mpz_init(aux1.y);
+	aux1.inf = 0;
+	mpz_init(aux2.x);
+	mpz_init(aux2.y);
+	aux2.inf = 0;
+	mpz_init(aux3.x);
+	mpz_init(aux3.y);
+	aux3.inf = 0;
+	// Validação
+	mult(&aux1, alice.sa, ec.G); // op1 = Integer(sa) * G
+	// gmp_printf("op1.x: %Zd\nop1.y: %Zd\n", aux1.x, aux1.y);
+	mpz_ior(s0, alice.ids.x, alice.V.x);
+	//st = hashlib.sha256(str(ror)).hexdigest(); rhash = Integer(mod(Integer(st, 16), n))
+	hash(s1, s0);
+	mult(&aux2, s1, bob.pu);
+	eccAdd(&aux3, aux2, alice.V);
+	// gmp_printf("op2.x: %Zd\nop2.y: %Zd\n", aux3.x, aux3.y);
+	if (mpz_cmp(aux1.x, aux3.x) == 0 && mpz_cmp(aux1.y, aux3.y) == 0) {
+		ret = 1;
+	} else {
+		ret = 0;
+	}
+	// Corretude
+	// gmp_printf("Kb.x: %Zd\nKb.y: %Zd\n", alice.pu.x, alice.pu.y);
+	// op3 = (Integer(s) * R) + (Integer(mod(m * (R[0]), n)) * G)
+	mult(&aux1, alice.s, alice.R); // aux1 = (Integer(s) * R)
+	// gmp_printf("Integer(s) * R: %Zd, %Zd\n", aux1.x, aux1.y);
+	mpz_mul(s0, m, alice.R.x); // s0 = m * (R[0])
+	modp(s0, s0); // s0 = mod(m * (R[0])
+	// gmp_printf("mod(m * (R[0]): %Zd\n", s0);
+	mult(&aux2, s0, ec.G); // aux2 = Integer(mod(m * (R[0]), n)) * G
+	// gmp_printf("mod(m * (R[0]), n) * G: %Zd, %Zd\n", aux2.x, aux2.y);
+	eccAdd(&aux3, aux1, aux2); // aux3 = Integer(s) * R) + (Integer(mod(m * (R[0]), n)) * G
+	// gmp_printf("op3.x: %Zd\nop3.y: %Zd\n", aux3.x, aux3.y);
+	if (mpz_cmp(alice.pu.x, aux3.x) == 0 && mpz_cmp(alice.pu.y, aux3.y) == 0) {
+		ret = ret*1;
+	} else {
+		ret = ret*0;
+	}
+	mpz_clear(s0);
+	mpz_clear(s1);
+	mpz_clear(aux1.x);
+	mpz_clear(aux1.y);
+	mpz_clear(aux2.x);
+	mpz_clear(aux2.y);
+	mpz_clear(aux3.x);
+	mpz_clear(aux3.y);
+	return ret;
+}
+
+void test(long int messageSize) {
 	double inicial, final;
 	FILE *outp = fopen("outputig.txt", "a");
 	long int groupAmnt = (messageSize % 15 == 0 ? messageSize/15 : messageSize/15 + 1);
 	// Cifra
 	struct coord *ciphered = malloc(groupAmnt * sizeof(struct coord));
+	struct coord *deciphered = malloc(groupAmnt * sizeof(struct coord));
 	struct coord pub_sess;
+
+	for (int i = 0; i < groupAmnt; i++) {
+		mpz_init(ciphered[i].x);
+		mpz_init(ciphered[i].y);
+		ciphered[i].inf = 0;
+		mpz_init(deciphered[i].x);
+		mpz_init(deciphered[i].y);
+		deciphered[i].inf = 0;
+	}
 	inicial = timestamp();
 	eccCipher(ciphered, &pub_sess, messageSize);
 	final = timestamp() - inicial;
-	fprintf(outp, "%d - %f - ", messageSize, final);
+	fprintf(outp, "%ld - %f - ", messageSize, final);
 	// Decifra
-	struct coord *deciphered = malloc(groupAmnt * sizeof(struct coord));
 	inicial = timestamp();
 	eccDecipher(deciphered, ciphered, pub_sess, messageSize);
 	final = timestamp() - inicial;
 	fprintf(outp, "%f\n", final);
 
 	for (int i = 0; i < groupAmnt; i++) {
-		// if (mpz_cmp(points[i % nPoints].x, deciphered[i].x) != 0 || mpz_cmp(points[i % nPoints].y, deciphered[i].y) != 0) {
-		// 	printf("teste %messageSize: ponto %d incorreto\n", i);
-		// }
+		if (mpz_cmp(points[i % nPoints].x, deciphered[i].x) != 0 || mpz_cmp(points[i % nPoints].y, deciphered[i].y) != 0) {
+			printf("teste %messageSize: ponto %d incorreto\n", i);
+		}
 		mpz_clear(ciphered[i].x);
 		mpz_clear(ciphered[i].y);
 		mpz_clear(deciphered[i].x);
@@ -523,6 +708,7 @@ void test(int messageSize) {
 
 void main()
 {
+	// Parameter initialization
 	mpz_init_set_str(ec.p, "FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF", 16);
 	mpz_init_set_str(ec.a, "FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC", 16);
 	mpz_init_set_str(ec.b, "5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B", 16);
@@ -531,66 +717,84 @@ void main()
 	ec.G.inf = 0;
 	mpz_init_set_str(ec.n, "FFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551", 16);
 
-	// mpz_init_set_ui(ec.n, 23);
+	// Random initialization
+	gmp_randinit_mt(state);
+	mpz_init_set_str(seed, "C49D360886E704936A6678E1139D26B7819F7E90", 16);
+	gmp_randseed(state, seed);
+
+	// mpz_init_set_ui(ec.p, 23);
 	// mpz_init_set_ui(ec.a, 1);
 	// mpz_init_set_ui(ec.b, 4);
 	// mpz_init_set_ui(ec.G.x, 1);
 	// mpz_init_set_ui(ec.G.y, 12);
 	// ec.G.inf = 0;
-	// mpz_init_set_ui(ec.n, 3);
+	// mpz_init_set_ui(ec.p, 3);
 
-	// gmp_printf("ec.n: %Zd\n", ec.n);
+	// gmp_printf("ec.p: %Zd\n", ec.p);
 	// gmp_printf("ec.a: %Zd\n", ec.a);
 	// gmp_printf("ec.b: %Zd\n", ec.b);
 	
 	findPoints();
-	// mpz_t dois;
-	// mpz_init_set_ui(dois, 2);
-	// struct coord p, q, r1;
-	// mpz_init_set_str(p.x, "48439561293906451759052585252797914202762949526041747995844080717082404635286", 10);
-	// mpz_init_set_str(p.y, "36134250956749795798585127919587881956611106672985015071877198253568414405109", 10);
-	// p.inf=0;
-	// mpz_init_set_str(q.x, "48439561293906451759052585252797914202762949526041747995844080717082404635286", 10);
-	// mpz_init_set_str(q.y, "36134250956749795798585127919587881956611106672985015071877198253568414405109", 10);
-	// q.inf=0;
-	// mpz_init(r1.x);
-	// mpz_init(r1.y);
-	// r1.inf=0;
-	// mult(&r1, dois, p);
-	// gmp_printf("mult 2 * p: (%Zd, %Zd)\n", r1.x, r1.y);
-	// eccDbl(&r1, p);
-	// gmp_printf("double p: (%Zd, %Zd)\n", r1.x, r1.y);
-
-
-	//showPoints();
 	generateKeys();
-	gmp_printf("G:[%Zd,%Zd]\n", ec.G.x, ec.G.y);
-	gmp_printf("PU[Alice]:[%Zd,%Zd]\n", alice.pu.x, alice.pu.y);
-	gmp_printf("PU[Bob]:[%Zd,%Zd]\n", bob.pu.x, bob.pu.y);
+	// generateCertificates();
+	// mpz_t teste;
+	// struct coord pt;
+	// mpz_init_set_str(teste, "115792089210356248762697446949407573529996955224135760342422259061068512044368", 10);
+	// mpz_init(pt.x);
+	// mpz_init(pt.y);
+	// pt.inf = 0;
+	// mult(&pt, teste, ec.G);
+	// gmp_printf("%Zd\n%Zd\n", pt.x, pt.y);
+
+	// mpz_t teste;
+	// struct coord pt;
+	// mpz_init_set_str(teste, "115792089210356248762697446949407573529996955224135760342422259061068512044368", 10);
+	// mpz_init(pt.x);
+	// mpz_init(pt.y);
+	// pt.inf = 0;
+	// mult(&pt, teste, ec.G);
+	// gmp_printf("%Zd\n%Zd\n", pt.x, pt.y);
+	// gmp_printf("G:[%Zd,%Zd]\n", ec.G.x, ec.G.y);
+	// gmp_printf("PU[Alice]:[%Zd,%Zd]\n", alice.pu.x, alice.pu.y);
+	// gmp_printf("priv[Alice]:%Zd\n", alice.k);
+	// gmp_printf("PU[Bob]:[%Zd,%Zd]\n", bob.pu.x, bob.pu.y);
+	// gmp_printf("priv[Bob]:%Zd\n", bob.k);
+	// mpz_t teste;
+	// mpz_init(teste);
+	// mpz_urandomm(teste, state, ec.p);
+	// sign(teste);
+	// printf("%d\n", check(teste));
+	// mpz_t res, rop;
+	// mpz_init(res);
+	// mpz_init(rop);
+	// multInv(rop, ec.a);
+	// gmp_printf("multinv de %Zd = \n%Zd\n", ec.a, rop);
+	// hash(res, alice.k);
+	// gmp_printf("hash priv alice: %Zd\n", res);
 
 	test(1);
 	test(2);
-	// test(4);
-	// test(8);
-	// test(16);
-	// test(32);
-	// test(64);
-	// test(128);
-	// test(256);
-	// test(512);
-	// test(1024);
-	// test(2048);
-	// test(4096);
-	// test(8192);
-	// test(16384);
-	// test(32768);
-	// test(65536);
-	// test(131072);
-	// test(262144);
-	// test(524288);
+	test(4);
+	test(8);
+	test(16);
+	test(32);
+	test(64);
+	test(128);
+	test(256);
+	test(512);
+	test(1024);
+	test(2048);
+	test(4096);
+	test(8192);
+	test(16384);
+	test(32768);
+	test(65536);
+	test(131072);
+	test(262144);
+	test(524288);
 
 
-	mpz_clear(ec.n);
+	mpz_clear(ec.p);
 	mpz_clear(ec.a);
 	mpz_clear(ec.b);
 	mpz_clear(ec.G.x);

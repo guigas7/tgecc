@@ -36,9 +36,9 @@ void modp(mpz_t rop, mpz_t a)
 	mpz_t tmp;
 	mpz_init_set(tmp, a);
 	if(mpz_cmp_ui(a, 0) < 0) {
-		mpz_add(tmp, a, ec.n);
+		mpz_add(tmp, a, ec.p);
 	}
-	mpz_mod(rop, tmp, ec.n); // return
+	mpz_mod(rop, tmp, ec.p); // return
 	mpz_clear(tmp);
 }
 
@@ -281,7 +281,7 @@ void euclidian(mpz_t rop, mpz_t a) /* Extended Euclidian algorithm */
 	mpz_init_set(g, a);
 	mpz_init_set_ui(u1,0);
 	mpz_init_set_ui(v1,1);
-	mpz_init_set(g1, ec.n);
+	mpz_init_set(g1, ec.p);
 	mpz_init(q);
 	mpz_init(t1);
 	mpz_init(t1t);
@@ -353,7 +353,7 @@ void generateKeys()
 
 	// alice key pair
 	gmp_randseed(state, seed);
-	mpz_urandomm(s0, state, ec.n); // s0 = rand % n
+	mpz_urandomm(s0, state, ec.p); // s0 = rand % n
 	// PEs[i].k = (rand % p) + 1
 	mpz_init(alice.k);
 	mpz_add_ui(alice.k, s0, 1); //~ Chave privada (k)
@@ -370,7 +370,7 @@ void generateKeys()
 	// bob key pair
 	mpz_add(seed, seed, seed);
 	gmp_randseed(state, seed);
-	mpz_urandomm(s0, state, ec.n); // s0 = rand % n
+	mpz_urandomm(s0, state, ec.p); // s0 = rand % n
 	// PEs[i].k = (rand % p) + 1
 	mpz_init(bob.k);
 	mpz_add_ui(bob.k, s0, 1); //~ Chave privada (k)
@@ -515,7 +515,7 @@ void eccCipher(struct coord *c2, struct coord *c1, int size)
 	mpz_init_set_str(seed, "C49D360886E704936A6678E1139D26B7819F7E90", 16);
 	gmp_randseed(state, seed);
 	mpz_init(alice.k_sess);
-	mpz_urandomm(alice.k_sess, state, ec.n); // chave privada de sessão
+	mpz_urandomm(alice.k_sess, state, ec.p); // chave privada de sessão
 	// chave pública de sessão c1 = K = kG	mpz_init(c1.x);
 	mpz_init(c1->y);
 	mpz_init(c1->x);
@@ -581,7 +581,7 @@ void main()
 	mpz_init_set_str(ec.G.x, "6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296", 16);
 	mpz_init_set_str(ec.G.y, "4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5", 16);
 	ec.G.inf = 0;
-	mpz_init_set_str(ec.n, "FFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551", 16);
+	mpz_init_set_str(ec.p, "FFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551", 16);
 
 	// mpz_init_set_ui(ec.p, 23);
 	// mpz_init_set_ui(ec.a, 1);
@@ -589,7 +589,7 @@ void main()
 	// mpz_init_set_ui(ec.G.x, 1);
 	// mpz_init_set_ui(ec.G.y, 12);
 	// ec.G.inf = 0;
-	// mpz_init_set_ui(ec.n, 3);
+	// mpz_init_set_ui(ec.p, 3);
 
 	// gmp_printf("ec.p: %Zd\n", ec.p);
 	// gmp_printf("ec.a: %Zd\n", ec.a);
@@ -620,21 +620,30 @@ void main()
 	gmp_printf("PU[Alice]:[%Zd,%Zd]\n", alice.pu.x, alice.pu.y);
 	gmp_printf("PU[Bob]:[%Zd,%Zd]\n", bob.pu.x, bob.pu.y);
 
-	int messageSize = 32;
-	int groupAmnt = (messageSize % 15 == 0 ? messageSize/15 : messageSize/15 + 1);
-	// Cifra
-	struct coord ciphered[groupAmnt];
-	struct coord pub_sess;
-	eccCipher(ciphered, &pub_sess, messageSize);
+	mpz_t teste;
+	struct coord pt;
+	mpz_init_set_str(teste, "19886648930451204810555547513071138517482539277950068233182307829431718067088", 10);
+	mpz_init(pt.x);
+	mpz_init(pt.y);
+	pt.inf = 0;
+	mult(&pt, teste, ec.G);
+	gmp_printf("%Zd\n%Zd\n", pt.x, pt.y);
 
-	// Decifra
-	struct coord deciphered[groupAmnt];
-	eccDecipher(deciphered, ciphered, pub_sess, messageSize);
+	// int messageSize = 32;
+	// int groupAmnt = (messageSize % 15 == 0 ? messageSize/15 : messageSize/15 + 1);
+	// // Cifra
+	// struct coord ciphered[groupAmnt];
+	// struct coord pub_sess;
+	// eccCipher(ciphered, &pub_sess, messageSize);
+
+	// // Decifra
+	// struct coord deciphered[groupAmnt];
+	// eccDecipher(deciphered, ciphered, pub_sess, messageSize);
 
 	mpz_clear(ec.p);
 	mpz_clear(ec.a);
 	mpz_clear(ec.b);
 	mpz_clear(ec.G.x);
 	mpz_clear(ec.G.y);
-	mpz_clear(ec.n);
+	mpz_clear(ec.p);
 }
