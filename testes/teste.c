@@ -753,23 +753,7 @@ void main()
 	// mpz_urandomm(teste, state, ec.p);
 	// sign(teste);
 	// printf("%d\n", check(teste));
-	// mpz_t res, rop;
-	// mpz_init(res);
-	// mpz_init(rop);
-	// multInv(rop, ec.a);
-	// gmp_printf("multinv de %Zd = \n%Zd\n", ec.a, rop);
-	// hash(res, alice.k);
-	// gmp_printf("hash priv alice: %Zd\n", res);
-	
-	// mpz_t teste;
-	// struct coord pt;
-	// mpz_init_set_str(teste, "115792089210356248762697446949407573529996955224135760342422259061068512044368", 10);
-	// mpz_init(pt.x);
-	// mpz_init(pt.y);
-	// pt.inf = 0;
-	// mult(&pt, teste, ec.G);
-	// gmp_printf("%Zd\n%Zd\n", pt.x, pt.y);
-	
+
 	test(1);
 	test(2);
 	test(4);
@@ -780,16 +764,16 @@ void main()
 	test(128);
 	test(256);
 	test(512);
-	// test(1024);
-	// test(2048);
-	// test(4096);
-	// test(8192);
-	// test(16384);
-	// test(32768);
-	// test(65536);
-	// test(131072);
-	// test(262144);
-	// test(524288);
+	test(1024);
+	test(2048);
+	test(4096);
+	test(8192);
+	test(16384);
+	test(32768);
+	test(65536);
+	test(131072);
+	test(262144);
+	test(524288);
 
 	mpz_clear(ec.p);
 	mpz_clear(ec.a);
