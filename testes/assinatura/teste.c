@@ -584,6 +584,10 @@ inline void generateCertificates()
 
 	// initialize signature values
 	mpz_init(alice.r);
+	mpz_init(alice.I.x);
+	mpz_init(alice.I.y);
+	alice.I.inf = 0;
+
 	mpz_clear(aux1);
 	mpz_clear(aux2);
 }
@@ -593,6 +597,21 @@ inline void sign(struct cert *signedc, int size)
 	mpz_t aux1, aux2;
 	mpz_init(aux1);
 	mpz_init(aux2);
+	struct coord pt0, pt1;
+	mpz_init(pt0.x);
+	mpz_init(pt0.y);
+	pt0.inf = 0;
+	mpz_init(pt1.x);
+	mpz_init(pt1.y);
+	pt1.inf = 0;
+	// - Identidade
+	eccAdd(&pt0, alice.ids, alice.id);
+	mult(&pt1, alice.k, bob.pu);
+	eccAdd(&alice.I, pt0, pt1);
+	mpz_clear(pt0.x);
+	mpz_clear(pt0.y);
+	mpz_clear(pt1.x);
+	mpz_clear(pt1.y);
 	for (int i = 0; i < size; i++) {
 		mpz_urandomm(alice.r, state, ec.p);
 		// gmp_printf("m: %Zd\n", signedc[i].m);

@@ -40,6 +40,7 @@ struct pe
 	struct coord id;
 	struct coord ids;
 	struct coord V;
+	struct coord I;
 	mpz_t k;
 	mpz_t k_sess;
 	mpz_t v;
