@@ -593,7 +593,8 @@ inline void sign(struct cert *signedc, int size)
 	mpz_t aux1, aux2;
 	mpz_init(aux1);
 	mpz_init(aux2);
-	for (int i = 0; i < size; i++) {
+	long int groupAmnt = (size % 15 == 0 ? size/15 : size/15 + 1);
+	for (int i = 0; i < groupAmnt; i++) {
 		mpz_urandomm(alice.r, state, ec.p);
 		// gmp_printf("m: %Zd\n", signedc[i].m);
 		// gmp_printf("r: %Zd\n", alice.r);
@@ -643,13 +644,14 @@ inline int check(struct cert *signedc, int size)
 	mult(&aux2, s1, bob.pu);
 	eccAdd(&aux3, aux2, alice.V);
 	// gmp_printf("op2.x: %Zd\nop2.y: %Zd\n", aux3.x, aux3.y);
+	long int groupAmnt = (size % 15 == 0 ? size/15 : size/15 + 1);
 	if (mpz_cmp(aux1.x, aux3.x) == 0 && mpz_cmp(aux1.y, aux3.y) == 0) {
 		ret = 1;
 	} else {
 		printf("check: %d: Não validado\n", size);
 		ret = 0;
 	}
-	for (int i = 0; i < size; i++) {
+	for (int i = 0; i < groupAmnt; i++) {
 		// Corretude
 		// gmp_printf("Kb.x: %Zd\nKb.y: %Zd\n", alice.pu.x, alice.pu.y);
 		// op3 = (Integer(s) * R) + (Integer(mod(m * (R[0]), n)) * G)
@@ -685,8 +687,9 @@ void test(long int messageSize) {
 	int ret;
 	FILE *outp = fopen("output.txt", "a");
 	// initialize certificate
-	struct cert *signedc = malloc(messageSize * sizeof(struct cert));
-	for (int i = 0; i < messageSize; i++) {
+	long int groupAmnt = (messageSize % 15 == 0 ? messageSize/15 : messageSize/15 + 1);
+	struct cert *signedc = malloc(groupAmnt * sizeof(struct cert));
+	for (int i = 0; i < groupAmnt; i++) {
 		mpz_init(signedc[i].R.x);
 		mpz_init(signedc[i].R.y);
 		signedc[i].R.inf = 0;
@@ -705,9 +708,9 @@ void test(long int messageSize) {
 	final = timestamp() - inicial;
 	fprintf(outp, "%f\n", final);
 
-	for (int i = 0; i < messageSize; i++) {
+	for (int i = 0; i < groupAmnt; i++) {
 		// if (ret == 0) {
-		// 	printf("teste %ld: verificação %d inválida\n", messageSize, i);
+		// 	printf("teste %ld: verificação %d inválida\n", groupAmnt, i);
 		// }
 		mpz_clear(signedc[i].R.x);
 		mpz_clear(signedc[i].R.y);
