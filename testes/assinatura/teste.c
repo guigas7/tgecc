@@ -738,6 +738,7 @@ void test(long int messageSize) {
 
 void main()
 {
+	double inicial, final;
 	// Parameter initialization
 	mpz_init_set_str(ec.p, "FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF", 16);
 	mpz_init_set_str(ec.a, "FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC", 16);
@@ -782,36 +783,32 @@ void main()
 	// gmp_printf("PU[Bob]:[%Zd,%Zd]\n", bob.pu.x, bob.pu.y);
 	// gmp_printf("priv[Bob]:%Zd\n", bob.k);
 
-	genMessages();
-
-	// mpz_t res, rop;
-	// mpz_init(res);
 	// mpz_init(rop);
 	// multInv(rop, ec.a);
 	// gmp_printf("multinv de %Zd = \n%Zd\n", ec.a, rop);
 	// hash(res, alice.k);
 	// gmp_printf("hash priv alice: %Zd\n", res);
 
-	test(1);
-	test(2);
-	test(4);
-	test(8);
-	test(16);
-	test(32);
-	test(64);
-	test(128);
-	test(256);
-	test(512);
-	test(1024);
-	test(2048);
-	test(4096);
-	test(8192);
-	test(16384);
-	test(32768);
-	test(65536);
-	test(131072);
-	test(262144);
-	test(524288);
+	// test(1);
+	// test(2);
+	// test(4);
+	// test(8);
+	// test(16);
+	// test(32);
+	// test(64);
+	// test(128);
+	// test(256);
+	// test(512);
+	// test(1024);
+	// test(2048);
+	// test(4096);
+	// test(8192);
+	// test(16384);
+	// test(32768);
+	// test(65536);
+	// test(131072);
+	// test(262144);
+	// test(524288);
 
 	mpz_clear(ec.p);
 	mpz_clear(ec.a);
